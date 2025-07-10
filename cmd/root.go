@@ -3,13 +3,13 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/verazalyali/internal/config"
 	"github.com/verazalyali/internal/ports"
+	"github.com/verazalyali/internal/types"
 	"os"
 )
 
 var (
-	cfg     = &config.AppConfig{}
+	cfg     = &types.AppConfig{}
 	rootCmd = &cobra.Command{
 		Use:   "autoportfinder",
 		Short: "Show which processes are using which port",

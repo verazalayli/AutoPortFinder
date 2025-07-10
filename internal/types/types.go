@@ -1,4 +1,10 @@
-package config
+package types
+
+type PortInfo struct {
+	Port     int
+	PID      int
+	ProcName string
+}
 
 type AppConfig struct {
 	PortFilter    int

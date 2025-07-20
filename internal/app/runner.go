@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"github.com/verazalyali/internal/output"
+	killer "github.com/verazalyali/internal/killer"
 	"github.com/verazalyali/internal/ports"
 	"github.com/verazalyali/internal/types"
 )
@@ -10,27 +10,14 @@ import (
 func Run(cfg *types.AppConfig) error {
 	results, err := ports.ScanPorts(cfg)
 	if err != nil {
-		return fmt.Errorf("scan failed: %v", err)
-	}
-
-	if len(results) == 0 {
-		fmt.Println("No matching ports found.")
-		return nil
-	}
-
-	switch cfg.OutputFormat {
-	case "json":
-		return output.OutputJSON(results)
-	case "table":
-		output.OutputTable(results)
-	case "interface":
-		output.OutputInterface(results)
-	default:
-		return fmt.Errorf("unknown output format: %s", cfg.OutputFormat)
+		return fmt.Errorf("scan error: %w", err)
 	}
 
 	if cfg.KillFlag {
-		// Удаление процессов — не реализовано
+		if cfg.PortFilter == 0 {
+			return fmt.Errorf("to use --kill you must specify a port with --port")
+		}
+		return killer.KillByPort(results, cfg.PortFilter)
 	}
 
 	return nil

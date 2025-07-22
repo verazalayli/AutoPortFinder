@@ -1,154 +1,167 @@
-# AutoPortFinder
+Вот пример README для твоего проекта **AutoPortFinder**, разделённый на две части: **пользовательская (User Guide)** и **техническая (Developer Guide)**.
 
+---
+
+## 📌 AutoPortFinder (APF)
+
+**AutoPortFinder** is a CLI tool to **find which processes are using which ports** — and optionally **kill them**.
+Useful for developers, DevOps, or anyone who runs local servers and needs to free ports quickly.
+
+---
+
+## 🚀 User Guide
+
+### ✅ Features
+
+* 🔍 Scan all `LISTENING` TCP ports
+* 🎯 Filter by port number or process name
+* 📊 Display results in table, JSON, or plain format
+* 🧨 Kill processes occupying ports (optional)
+
+---
+
+### 📦 Installation
+
+```bash
+go install github.com/your-username/autoportfinder@latest
+```
+
+Or clone and build manually:
+
+```bash
+git clone https://github.com/your-username/autoportfinder.git
+cd autoportfinder
+go build -o apf
+```
+
+---
+
+### 🧪 Usage
+
+```bash
+./apf [flags]
+```
+
+#### 🔍 Scan open ports:
+
+```bash
+apf
+```
+
+#### 🎯 Filter by port or process name:
+
+```bash
+apf --port 8080
+apf --process nginx
+```
+
+#### 🖨️ Output formats:
+
+```bash
+apf --format table      # Default
+apf --format json
+apf --format interface  # Simple plain-text
+```
+
+#### 🧨 Kill process on port:
+
+```bash
+apf --port 3000 --kill
+```
+
+> ⚠️ Requires root/admin privileges depending on your OS.
+
+---
+
+### 🔧 CLI Flags
+
+| Flag            | Type   | Description                                 |
+| --------------- | ------ | ------------------------------------------- |
+| `-p, --port`    | int    | Filter by specific port (e.g. `8080`)       |
+| `-r, --process` | string | Filter by process name                      |
+| `-f, --format`  | string | Output format: `table`, `json`, `interface` |
+| `--kill`        | bool   | Kill the found process(es)                  |
+
+---
+
+## ⚙️ Developer Guide
+
+### 🧱 Architecture
+
+The project follows a **Clean Architecture**-like separation of concerns:
+
+```
 autoportfinder/
-├── cmd/                    # CLI-команды
-│   └── root.go             # запуск CLI, flags, точки входа
-├── internal/
-│   ├── ports/              # логика поиска открытых портов
-│   │   ├── scanner.go      # сканирование портов и соединений
-│   │   └── resolver.go     # получение информации о процессе
-│   ├── output/             # вывод информации
-│   │   └── table.go        # табличный вывод
-│   └── utils/              # утилиты: фильтрация, сортировка, логика
-│       └── filter.go
-├── go.mod
-└── main.go                 # основная точка входа
-
-
-
-
-Отличный выбор! 🎯 **AutoPortFinder** — реально полезный инструмент, который можно использовать каждый день, и он отлично подходит для прокачки Go на junior-to-middle уровне. Ниже — подробный **план разработки**, архитектура и список знаний/навыков, которые стоит подтянуть.
-
----
-
-## 📌 Что делает AutoPortFinder
-
-1. Находит **все занятые порты** на машине
-2. Показывает **какие процессы** их используют
-3. Позволяет фильтровать по:
-
-    * порту
-    * имени процесса
-    * диапазону портов
-4. (Опционально) Может:
-
-    * послать сигнал на завершение процесса
-    * вести лог по портам (кто и когда занял)
-    * запускаться как daemon
-
----
-
-## 🧱 Project architecture
-
-```
-┌────────────────────┐
-│      CLI UI        │ ← текстовый интерфейс (cmd-флаги, меню)
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│  Port Scanner      │ ← обходит порты, находит PID/название
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ Process Resolver   │ ← получает имя процесса по PID
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ Logger / Exporter  │ ← сохраняет или выводит в json/csv
-└────────────────────┘
+├── cmd/                # CLI and flags (Cobra)
+├── core/               # Runner (orchestrates Scanner, Output, Killer)
+├── adapter/            # Concrete implementations of Scanner, Killer
+├── output/             # Concrete Output formats
+├── domain/             # Interfaces + shared DTOs (AppConfig, PortInfo)
+└── main.go             # Entry point
 ```
 
 ---
 
-## 📌 Функции по шагам
+### 🧩 Interfaces (domain/interfaces.go)
 
-### 🔹 MVP (первая версия):
+```go
+type Scanner interface {
+    Scan(cfg *AppConfig) ([]PortInfo, error)
+}
 
-* [x] Получение списка всех занятых портов
-* [x] Поиск PID процесса, использующего порт
-* [x] Получение имени процесса
-* [x] CLI-интерфейс: список, фильтрация, сортировка
+type Output interface {
+    Print([]PortInfo, format string) error
+}
 
-### 🔸 Опционально:
-
-* [ ] Убить процесс по порту
-* [ ] Watch-режим (обновлять каждые X сек)
-* [ ] REST API (показывать в браузере)
-* [ ] Интеграция с системой логов
-* [ ] Поддержка Windows/macOS/Linux
-
----
-
-## 🧠 Что нужно знать
-
-### 1. **Go Fundamentals**
-
-* Структуры, методы, интерфейсы
-* Goroutines (для watch-мода)
-* Работа с флагами (`flag` или `cobra`)
-* Форматированный вывод (`fmt`, `text/tabwriter`, `tablewriter`)
-
-### 2. **Работа с сетью**
-
-* Чтение данных о соединениях:
-
-    * `netstat`, `ss` (Linux)
-    * `lsof`, `nettop` (macOS)
-    * `GetExtendedTcpTable` (Windows через Cgo)
-* Чтение `/proc/net/tcp`, `/proc/net/udp` и `/proc/[pid]/fd` (на Linux)
-
-### 3. **Работа с процессами**
-
-* Получение PID и имени процесса
-* Убийство процесса (`os.FindProcess`, `.Kill()`)
-
-### 4. **CLI-интерфейс**
-
-* `flag` или `urfave/cli`/`spf13/cobra` для удобства
-* Отображение табличных данных (таблица портов/процессов)
-* Вывод в разных форматах (JSON, CSV)
-
-### 5. **(Опционально) REST API**
-
-* Использовать `chi` или `fiber` или `echo`
-* Поднять простой сервер, отдающий список портов по запросу
+type Killer interface {
+    Kill([]PortInfo) error
+}
+```
 
 ---
 
-## 📦 Библиотеки, которые могут пригодиться
+### 📁 Module Responsibilities
 
-| Назначение          | Библиотека                  |
-| ------------------- | --------------------------- |
-| CLI                 | `spf13/cobra`, `urfave/cli` |
-| Табличный вывод     | `olekukonko/tablewriter`    |
-| Работа с процессами | `shirou/gopsutil`           |
-| JSON-логирование    | `rs/zerolog`, `uber/zap`    |
-| REST API (опц.)     | `chi`, `echo`, `fiber`      |
-
----
-
-## 🏁 Примерные этапы разработки
-
-| Этап | Описание                                                                     |
-| ---- | ---------------------------------------------------------------------------- |
-| 1.   | Научиться получать список портов через системные команды или `/proc/net/tcp` |
-| 2.   | Найти PID процесса, который держит порт                                      |
-| 3.   | Получить имя процесса по PID                                                 |
-| 4.   | Вывод в таблице + фильтры                                                    |
-| 5.   | Добавить CLI с параметрами поиска                                            |
-| 6.   | (опц.) Возможность kill процесса                                             |
-| 7.   | (опц.) Режим наблюдения: обновление каждые 5 секунд                          |
-| 8.   | (опц.) REST API для вывода информации через браузер                          |
+| Layer     | File                                  | Description                                          |
+| --------- | ------------------------------------- | ---------------------------------------------------- |
+| `cmd`     | `root.go`                             | CLI entrypoint (flags, command routing)              |
+| `core`    | `runner.go`                           | Central orchestration logic                          |
+| `adapter` | `scanner.go`                          | Uses gopsutil to collect open ports and process info |
+|           | `killer.go`                           | Kills processes via PID                              |
+| `output`  | `table.go`, `json.go`, `interface.go` | Different output renderers                           |
+| `domain`  | `app_config.go`                       | Config structure                                     |
+|           | `interfaces.go`                       | Domain interfaces                                    |
 
 ---
 
-Хочешь — могу помочь:
+### 📚 Dependencies
 
-* выбрать подходящий способ реализации (через `/proc`, `netstat`, lsof, psutil)
-* создать стартовый шаблон проекта (main.go, структура, Makefile)
-* или написать MVP
+* [`gopsutil`](https://github.com/shirou/gopsutil) — for fetching process/port info
+* [`tablewriter`](https://github.com/olekukonko/tablewriter) — for pretty table output
+* [`cobra`](https://github.com/spf13/cobra) — CLI framework
 
-С чего хочешь начать?
+---
+
+### 🧪 Run tests
+
+> Unit tests can be added in each package.
+
+```bash
+go test ./...
+```
+
+---
+
+### 🤝 Contributing
+
+Pull requests and issues are welcome! Please lint and format your code with `go fmt`.
+
+---
+
+### 📜 License
+
+MIT License
+
+---
+
+Хочешь — добавлю пример вывода для каждого из форматов (`table`, `json`, `interface`) или CI-бейджи.

@@ -1,6 +1,3 @@
-Вот пример README для твоего проекта **AutoPortFinder**, разделённый на две части: **пользовательская (User Guide)** и **техническая (Developer Guide)**.
-
----
 
 ## 📌 AutoPortFinder (APF)
 

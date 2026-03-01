@@ -163,5 +163,3 @@ Pull requests and issues are welcome! Please lint and format your code with `go 
 MIT License
 
 ---
-
-Хочешь — добавлю пример вывода для каждого из форматов (`table`, `json`, `interface`) или CI-бейджи.
